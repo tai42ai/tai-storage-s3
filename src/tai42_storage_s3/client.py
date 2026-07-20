@@ -1,7 +1,7 @@
 """The pooled aioboto3 S3 client.
 
-``S3Client`` subclasses ``tai_kit.clients.PooledClient`` — one connected S3 client
-per event loop, reached through ``tai_app.clients.client_ctx(S3Client)``. It reads
+``S3Client`` subclasses ``tai42_kit.clients.PooledClient`` — one connected S3 client
+per event loop, reached through ``tai42_app.clients.client_ctx(S3Client)``. It reads
 its connection from the cached ``s3_settings`` singleton, so the pool key stays
 empty (a single configured client per loop).
 """
@@ -14,9 +14,9 @@ import aioboto3
 from botocore.config import Config
 from botocore.exceptions import ConnectionError as BotocoreConnectionError
 from botocore.exceptions import HTTPClientError
-from tai_kit.clients.base import PooledClient, is_loop_bound_runtime_error, reject_unknown_connection_kwargs
+from tai42_kit.clients.base import PooledClient, is_loop_bound_runtime_error, reject_unknown_connection_kwargs
 
-from tai_storage_s3.settings import s3_settings
+from tai42_storage_s3.settings import s3_settings
 
 # The S3 client reads its entire connection from the cached settings singleton,
 # so it accepts no connection kwargs — anything passed is a typo that would

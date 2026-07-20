@@ -7,11 +7,11 @@ import tomllib
 from pathlib import Path
 
 import yaml
-from tai_contract.plugins import PluginSpec
+from tai42_contract.plugins import PluginSpec
 
 _REPO_ROOT = Path(__file__).resolve().parent.parent
 _ROOT_SPEC = _REPO_ROOT / "tai-plugin.yml"
-_PACKAGED_SPEC = _REPO_ROOT / "src" / "tai_storage_s3" / "tai-plugin.yml"
+_PACKAGED_SPEC = _REPO_ROOT / "src" / "tai42_storage_s3" / "tai-plugin.yml"
 
 
 def _spec() -> PluginSpec:
@@ -40,9 +40,9 @@ def test_packaged_spec_is_declared_in_package_data() -> None:
     pyproject = tomllib.loads((_REPO_ROOT / "pyproject.toml").read_text(encoding="utf-8"))
     package_data = pyproject["tool"]["setuptools"]["package-data"]
     packages_shipping_the_spec = [package for package, patterns in package_data.items() if "tai-plugin.yml" in patterns]
-    assert packages_shipping_the_spec == ["tai_storage_s3"], (
+    assert packages_shipping_the_spec == ["tai42_storage_s3"], (
         "[tool.setuptools.package-data] must ship 'tai-plugin.yml' from exactly the "
-        f"'tai_storage_s3' package that owns the packaged copy; found {packages_shipping_the_spec!r}"
+        f"'tai42_storage_s3' package that owns the packaged copy; found {packages_shipping_the_spec!r}"
     )
 
 

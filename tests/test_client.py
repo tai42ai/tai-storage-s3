@@ -16,8 +16,8 @@ from unittest.mock import AsyncMock
 import pytest
 from pydantic import SecretStr
 
-from tai_storage_s3 import client as client_module
-from tai_storage_s3.client import S3Client
+from tai42_storage_s3 import client as client_module
+from tai42_storage_s3.client import S3Client
 
 
 def _settings(**overrides: Any) -> SimpleNamespace:

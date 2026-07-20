@@ -1,6 +1,6 @@
 """The S3 ``Storage`` backend.
 
-``S3Storage`` implements the full ``tai_contract.storage.Storage`` surface over an
+``S3Storage`` implements the full ``tai42_contract.storage.Storage`` surface over an
 S3 bucket. S3 stores bytes natively, so it overrides the binary/media methods:
 ``load_bytes`` returns the stored bytes unaltered, ``upload_bytes`` writes a raw
 body with a parametrized content-type, and ``stat`` reports the object's stored
@@ -14,11 +14,11 @@ import logging
 from typing import Any
 
 from botocore.exceptions import ClientError
-from tai_contract.app import tai_app
-from tai_contract.storage import ObjectStat, Storage, assert_not_root
+from tai42_contract.app import tai42_app
+from tai42_contract.storage import ObjectStat, Storage, assert_not_root
 
-from tai_storage_s3.client import S3Client
-from tai_storage_s3.settings import s3_settings
+from tai42_storage_s3.client import S3Client
+from tai42_storage_s3.settings import s3_settings
 
 logger = logging.getLogger(__name__)
 
@@ -53,14 +53,14 @@ def _bucket() -> str:
 # Importing this module registers S3Storage as the app's storage provider (the
 # manifest's storage_module field names this package to import — there is no
 # entry-point). The decorator returns the class unchanged.
-@tai_app.storage.register_storage
+@tai42_app.storage.register_storage
 class S3Storage(Storage):
     async def load(self, path: str) -> str:
         return (await self.load_bytes(path)).decode("utf-8")
 
     async def load_bytes(self, path: str) -> bytes:
         bucket = _bucket()
-        async with tai_app.clients.client_ctx(S3Client) as client:
+        async with tai42_app.clients.client_ctx(S3Client) as client:
             try:
                 resp = await client.get_object(Bucket=bucket, Key=path)
             except ClientError as e:
@@ -73,7 +73,7 @@ class S3Storage(Storage):
 
     async def list(self) -> list[str]:
         bucket = _bucket()
-        async with tai_app.clients.client_ctx(S3Client) as client:
+        async with tai42_app.clients.client_ctx(S3Client) as client:
             paginator = client.get_paginator("list_objects_v2")
             keys: list[str] = []
             async for page in paginator.paginate(Bucket=bucket):
@@ -88,13 +88,13 @@ class S3Storage(Storage):
         put_kwargs: dict[str, Any] = {"Bucket": _bucket(), "Key": path, "Body": data}
         if content_type is not None:
             put_kwargs["ContentType"] = content_type
-        async with tai_app.clients.client_ctx(S3Client) as client:
+        async with tai42_app.clients.client_ctx(S3Client) as client:
             await client.put_object(**put_kwargs)
         logger.info("Uploaded object to %s", path)
 
     async def delete(self, path: str) -> None:
         bucket = _bucket()
-        async with tai_app.clients.client_ctx(S3Client) as client:
+        async with tai42_app.clients.client_ctx(S3Client) as client:
             # delete_object succeeds silently on a missing key, so confirm the
             # object exists first to honor the FileNotFoundError contract.
             try:
@@ -114,7 +114,7 @@ class S3Storage(Storage):
         prefix = path if path.endswith("/") else f"{path}/"
         bucket = _bucket()
 
-        async with tai_app.clients.client_ctx(S3Client) as client:
+        async with tai42_app.clients.client_ctx(S3Client) as client:
             paginator = client.get_paginator("list_objects_v2")
             keys: list[dict[str, str]] = []
             async for page in paginator.paginate(Bucket=bucket, Prefix=prefix):
@@ -135,7 +135,7 @@ class S3Storage(Storage):
 
     async def stat(self, path: str) -> ObjectStat:
         bucket = _bucket()
-        async with tai_app.clients.client_ctx(S3Client) as client:
+        async with tai42_app.clients.client_ctx(S3Client) as client:
             try:
                 resp = await client.head_object(Bucket=bucket, Key=path)
             except ClientError as e:

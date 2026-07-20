@@ -1,8 +1,8 @@
 """Bind a light stub app before the backend is imported.
 
-``tai_storage_s3.storage`` decorates ``S3Storage`` with
-``@tai_app.storage.register_storage`` at import time and reaches its S3 client via
-``tai_app.clients.client_ctx``. Binding a stub app here — at collection time,
+``tai42_storage_s3.storage`` decorates ``S3Storage`` with
+``@tai42_app.storage.register_storage`` at import time and reaches its S3 client via
+``tai42_app.clients.client_ctx``. Binding a stub app here — at collection time,
 before any test module imports the backend — satisfies both without standing up
 the real runtime. Tests drive the S3 client by setting ``stub_clients.client`` to
 a mock (see the ``s3_client`` fixture).
@@ -15,7 +15,7 @@ from typing import Any
 from unittest.mock import AsyncMock, MagicMock
 
 import pytest
-from tai_contract.app import tai_app
+from tai42_contract.app import tai42_app
 
 
 class _ClientCtx:
@@ -58,13 +58,13 @@ class _StubApp:
 
 
 _stub_app = _StubApp()
-tai_app.bind(_stub_app)
+tai42_app.bind(_stub_app)
 
 
 @pytest.fixture
 def s3_client(monkeypatch: pytest.MonkeyPatch) -> Any:
     """A mock S3 client wired into ``client_ctx`` with ``s3_settings`` stubbed."""
-    from tai_storage_s3 import storage as storage_module
+    from tai42_storage_s3 import storage as storage_module
 
     client = AsyncMock()
     # get_paginator is a synchronous boto call; only the page iteration awaits.

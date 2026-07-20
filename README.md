@@ -1,10 +1,10 @@
-# tai-storage-s3
+# tai42-storage-s3
 
 [![CI](https://github.com/tai42ai/tai-storage-s3/actions/workflows/ci.yml/badge.svg)](https://github.com/tai42ai/tai-storage-s3/actions/workflows/ci.yml)
 [![License: Apache 2.0](https://img.shields.io/badge/License-Apache_2.0-blue.svg)](LICENSE)
 
 An S3 `Storage` backend for the TAI ecosystem. It stores text, binary, and media
-content in an S3 bucket, implementing the full `tai_contract.storage.Storage`
+content in an S3 bucket, implementing the full `tai42_contract.storage.Storage`
 surface — the five text methods (`load` / `list` / `upload` / `delete` /
 `delete_dir`) plus the binary/media methods (`load_bytes` / `upload_bytes` /
 `stat`). S3 stores bytes natively, so the binary methods are true reads/writes
@@ -24,32 +24,32 @@ covers the platform-level story:
 - Build a storage provider (author guide): https://tai42.ai/guides/authors/storage-provider
 - Ecosystem catalog: https://tai42.ai/reference/catalog
 
-Its only tai-* dependencies are `tai-contract` (the `Storage` ABC, `ObjectStat`,
-`assert_not_root`, and the `tai_app` handle) and `tai-kit` (`PooledClient`,
+Its only tai-* dependencies are `tai42-contract` (the `Storage` ABC, `ObjectStat`,
+`assert_not_root`, and the `tai42_app` handle) and `tai42-kit` (`PooledClient`,
 `TaiBaseSettings`, and the settings cache). Beyond those it depends on its S3
 driver (`aioboto3`, `botocore`) and `pydantic` / `pydantic-settings`.
 
 ## Install
 
 Requires **Python 3.13+**. Nothing is on PyPI yet, so install from source — clone
-this repo alongside your `tai-skeleton` checkout and add it as an editable
+this repo alongside your `tai42-skeleton` checkout and add it as an editable
 dependency of the environment that runs the server:
 
 ```bash
 git clone https://github.com/tai42ai/tai-storage-s3
 cd tai-skeleton   # or your own app checkout
-uv add --editable ../tai-storage-s3   # once published: uv add tai-storage-s3
+uv add --editable ../tai-storage-s3   # once published: uv add tai42-storage-s3
 ```
 
 ## Discovery
 
 The skeleton discovers this backend by **importing its package** — importing
-`tai_storage_s3` fires the `@tai_app.storage.register_storage` decorator on
+`tai42_storage_s3` fires the `@tai42_app.storage.register_storage` decorator on
 `S3Storage` as a side-effect (there is no entry-point). Name the package in your
 manifest's `storage_module` field so the runtime imports it at startup:
 
 ```yaml
-storage_module: tai_storage_s3
+storage_module: tai42_storage_s3
 ```
 
 ## Configuration

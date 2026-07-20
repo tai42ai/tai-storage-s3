@@ -12,9 +12,9 @@ from typing import Any
 
 import pytest
 from botocore.exceptions import ClientError
-from tai_contract.storage import ObjectStat, Storage
+from tai42_contract.storage import ObjectStat, Storage
 
-from tai_storage_s3 import S3Storage
+from tai42_storage_s3 import S3Storage
 from tests.conftest import FakeBody, FakePaginator, forbidden_error, not_found_error
 
 
@@ -24,7 +24,7 @@ def test_s3storage_is_registered_storage_subclass() -> None:
 
 
 def test_import_registers_provider_as_side_effect() -> None:
-    # The @tai_app.storage.register_storage decorator must register S3Storage as
+    # The @tai42_app.storage.register_storage decorator must register S3Storage as
     # an import side-effect; the stub facet records the class it was handed. This
     # fails if the registration is dropped, not just if the class changes.
     from tests.conftest import _stub_app
@@ -33,13 +33,13 @@ def test_import_registers_provider_as_side_effect() -> None:
 
 
 def test_settings_env_prefix_is_storage_s3() -> None:
-    from tai_storage_s3.settings import S3Settings
+    from tai42_storage_s3.settings import S3Settings
 
     assert S3Settings.model_config.get("env_prefix") == "STORAGE_S3_"
 
 
 def test_settings_accessor_is_cached() -> None:
-    from tai_storage_s3.settings import S3Settings, s3_settings
+    from tai42_storage_s3.settings import S3Settings, s3_settings
 
     first = s3_settings()
     assert isinstance(first, S3Settings)
@@ -71,7 +71,7 @@ async def test_unset_bucket_raises_config_error(
     # any client call — not as a deep botocore validation error.
     from types import SimpleNamespace
 
-    from tai_storage_s3 import storage as storage_module
+    from tai42_storage_s3 import storage as storage_module
 
     monkeypatch.setattr(storage_module, "s3_settings", lambda: SimpleNamespace(bucket=None))
 

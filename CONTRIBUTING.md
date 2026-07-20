@@ -1,13 +1,13 @@
-# Contributing to tai-storage-s3
+# Contributing to tai42-storage-s3
 
-`tai-storage-s3` is the S3 **Storage** backend for the TAI ecosystem: it stores
+`tai42-storage-s3` is the S3 **Storage** backend for the TAI ecosystem: it stores
 text, binary, and media content in an S3 bucket, implementing the full
-`tai_contract.storage.Storage` surface. Because S3 stores bytes natively, the
+`tai42_contract.storage.Storage` surface. Because S3 stores bytes natively, the
 binary methods (`load_bytes` / `upload_bytes`) are true reads/writes rather than
-a text bridge. The hard rule (the plugin rule): **it depends on `tai-contract` +
-`tai-kit` only and never imports the skeleton** — beyond those it depends only on
-its S3 driver, `aioboto3`. Importing the `tai_storage_s3` package fires the
-`@tai_app.storage.register_storage` decorator on `S3Storage` as a side-effect, so
+a text bridge. The hard rule (the plugin rule): **it depends on `tai42-contract` +
+`tai42-kit` only and never imports the skeleton** — beyond those it depends only on
+its S3 driver, `aioboto3`. Importing the `tai42_storage_s3` package fires the
+`@tai42_app.storage.register_storage` decorator on `S3Storage` as a side-effect, so
 naming the package in a manifest's `storage_module` activates it — there is no
 import edge to the skeleton in either direction.
 
@@ -16,7 +16,7 @@ import edge to the skeleton in either direction.
 - **No skeleton import — ever.** The package is contract-facing; the ban is
   enforced by ruff (`flake8-tidy-imports`), so a stray import fails lint:
   ```bash
-  grep -rn "tai_skeleton" src/   # must be empty
+  grep -rn "tai42_skeleton" src/   # must be empty
   ```
 - **Loud errors, no metadata leaks.** A missing object (404) maps to
   `FileNotFoundError`; a raw `ClientError` or bucket metadata never surfaces to

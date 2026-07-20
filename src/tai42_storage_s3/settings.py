@@ -1,7 +1,7 @@
 """S3 backend settings.
 
 A ``TaiBaseSettings`` subclass reading the ``STORAGE_S3_`` env group, exposed
-through the ``s3_settings`` accessor cached by ``tai_kit.settings.settings_cache``
+through the ``s3_settings`` accessor cached by ``tai42_kit.settings.settings_cache``
 (so a live-reload soft restart drops the singleton with every other settings
 group). ``bucket`` is the only per-request field; the rest form the connection.
 """
@@ -12,7 +12,7 @@ from typing import Literal
 
 from pydantic import SecretStr
 from pydantic_settings import SettingsConfigDict
-from tai_kit.settings import TaiBaseSettings, settings_cache
+from tai42_kit.settings import TaiBaseSettings, settings_cache
 
 
 class S3Settings(TaiBaseSettings):
