@@ -1,0 +1,54 @@
+# Contributing to tai-storage-s3
+
+`tai-storage-s3` is the S3 **Storage** backend for the TAI ecosystem: it stores
+text, binary, and media content in an S3 bucket, implementing the full
+`tai_contract.storage.Storage` surface. Because S3 stores bytes natively, the
+binary methods (`load_bytes` / `upload_bytes`) are true reads/writes rather than
+a text bridge. The hard rule (the plugin rule): **it depends on `tai-contract` +
+`tai-kit` only and never imports the skeleton** — beyond those it depends only on
+its S3 driver, `aioboto3`. Importing the `tai_storage_s3` package fires the
+`@tai_app.storage.register_storage` decorator on `S3Storage` as a side-effect, so
+naming the package in a manifest's `storage_module` activates it — there is no
+import edge to the skeleton in either direction.
+
+## Ground rules
+
+- **No skeleton import — ever.** The package is contract-facing; the ban is
+  enforced by ruff (`flake8-tidy-imports`), so a stray import fails lint:
+  ```bash
+  grep -rn "tai_skeleton" src/   # must be empty
+  ```
+- **Loud errors, no metadata leaks.** A missing object (404) maps to
+  `FileNotFoundError`; a raw `ClientError` or bucket metadata never surfaces to
+  the caller.
+- **Typed package** (`py.typed`). Pyright runs clean.
+
+## Layout
+
+- `storage.py` — `S3Storage` (the `Storage` impl) and its registration.
+- `client.py` — the pooled S3 (`aioboto3`) client.
+- `settings.py` — the `STORAGE_S3_` settings.
+
+## Dev
+
+```bash
+uv sync
+uv run pytest
+uv run ruff check .
+uv run ruff format --check .
+uv run pyright
+```
+
+For local cross-repo work, `make dev` editable-installs the sibling `tai-*`
+checkouts this package builds on into the venv. While `[tool.uv.sources]` pins
+those siblings to local paths, `uv sync` already installs them editable and
+`make dev` changes nothing; once the lock resolves them from the registry,
+`uv sync` / `uv run` installs the published builds instead, so re-run
+`make dev` afterward to restore the editable links.
+
+Before any commit, run a secret scan over `src/` and `tests/` (e.g.
+`detect-secrets scan`).
+
+## License
+
+By contributing you agree your contributions are licensed under Apache-2.0.
