@@ -1,11 +1,8 @@
 """Bind a light stub app before the backend is imported.
 
-``tai42_storage_s3.storage`` decorates ``S3Storage`` with
-``@tai42_app.storage.register_storage`` at import time and reaches its S3 client via
-``tai42_app.clients.client_ctx``. Binding a stub app here — at collection time,
-before any test module imports the backend — satisfies both without standing up
-the real runtime. Tests drive the S3 client by setting ``stub_clients.client`` to
-a mock (see the ``s3_client`` fixture).
+``tai42_storage_s3.storage`` registers ``S3Storage`` and reaches its S3 client via
+``tai42_app`` at import time, so the stub is bound here first. Tests drive the
+client by setting ``stub_clients.client`` to a mock (see the ``s3_client`` fixture).
 """
 
 from __future__ import annotations

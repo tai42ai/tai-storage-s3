@@ -1,11 +1,7 @@
-"""The S3 ``Storage`` backend.
+"""S3 ``Storage`` backend over an S3 bucket.
 
-``S3Storage`` implements the full ``tai42_contract.storage.Storage`` surface over an
-S3 bucket. S3 stores bytes natively, so it overrides the binary/media methods:
-``load_bytes`` returns the stored bytes unaltered, ``upload_bytes`` writes a raw
-body with a parametrized content-type, and ``stat`` reports the object's stored
-``ContentType`` (mapping a missing object to ``FileNotFoundError``). Text ``upload``
-tags every stored template ``application/jinja2``.
+S3 stores bytes and content-types natively; ``stat`` reports the stored
+``ContentType`` and maps a missing object to ``FileNotFoundError``.
 """
 
 from __future__ import annotations
@@ -22,15 +18,13 @@ from tai42_storage_s3.settings import s3_settings
 
 logger = logging.getLogger(__name__)
 
-# Error codes S3 returns for a missing key across get/head operations, mapped
-# uniformly to ``FileNotFoundError`` so no raw ``ClientError`` leaks.
+# S3 error codes for a missing key across get/head operations.
 _NOT_FOUND_CODES = frozenset({"NoSuchKey", "404", "NotFound"})
 
 # S3 rejects a single ``delete_objects`` request carrying more than 1000 keys.
 _DELETE_BATCH_SIZE = 1000
 
-# Content-type stored for every rendered-text template, so a template reads back
-# as its authoring format rather than an inferred ``text/*``.
+# Content-type stored for every text template upload.
 _TEMPLATE_CONTENT_TYPE = "application/jinja2"
 
 
@@ -39,20 +33,14 @@ def _is_not_found(error: ClientError) -> bool:
 
 
 def _bucket() -> str:
-    """The configured target bucket, raising a clear config error when unset.
-
-    Checked at use time, before any client or network work, so a missing bucket
-    surfaces as this message rather than a deep botocore validation error.
-    """
+    """The configured target bucket; raises a clear config error when unset."""
     bucket = s3_settings().bucket
     if not bucket:
         raise RuntimeError("S3 storage is not configured: set STORAGE_S3_BUCKET to the target bucket.")
     return bucket
 
 
-# Importing this module registers S3Storage as the app's storage provider (the
-# manifest's storage_module field names this package to import — there is no
-# entry-point). The decorator returns the class unchanged.
+# Importing this module registers S3Storage as the app's storage provider.
 @tai42_app.storage.register_storage
 class S3Storage(Storage):
     async def load(self, path: str) -> str:
@@ -95,8 +83,8 @@ class S3Storage(Storage):
     async def delete(self, path: str) -> None:
         bucket = _bucket()
         async with tai42_app.clients.client_ctx(S3Client) as client:
-            # delete_object succeeds silently on a missing key, so confirm the
-            # object exists first to honor the FileNotFoundError contract.
+            # delete_object is silent on a missing key; confirm existence first
+            # to honor the FileNotFoundError contract.
             try:
                 await client.head_object(Bucket=bucket, Key=path)
             except ClientError as e:
@@ -109,8 +97,8 @@ class S3Storage(Storage):
     async def delete_dir(self, path: str) -> None:
         assert_not_root(path)
 
-        # Treat the path as a directory prefix so only nested keys match (a bare
-        # "d" must not also delete sibling keys like "d2/x.j2").
+        # Treat the path as a directory prefix so a bare "d" can't match sibling
+        # keys like "d2/x.j2".
         prefix = path if path.endswith("/") else f"{path}/"
         bucket = _bucket()
 

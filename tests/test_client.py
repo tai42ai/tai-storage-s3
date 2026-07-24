@@ -1,10 +1,7 @@
-"""Unit tests for the pooled ``S3Client``.
+"""Unit tests for the pooled ``S3Client`` with ``aioboto3.Session`` faked.
 
-``aioboto3.Session`` is faked so the connect path runs without AWS: the tests
-assert the endpoint scheme is inferred correctly, that ``_create`` enters the
-client context and returns the live client, and that ``_close`` closes whatever
-client it is handed — the pool builds a fresh ``S3Client()`` to close on shutdown,
-so ``_close`` must keep no per-instance state.
+Covers endpoint-scheme inference, that ``_create`` enters the client context and
+returns the live client, and that ``_close`` closes any client it is handed.
 """
 
 from __future__ import annotations
@@ -93,8 +90,8 @@ async def test_create_returns_entered_client(fake_session: type[_FakeSession], m
 async def test_create_passes_none_credentials_when_unset(
     fake_session: type[_FakeSession], monkeypatch: pytest.MonkeyPatch
 ) -> None:
-    # With no configured credentials, None is passed through (boto falls back to
-    # its own credential chain) rather than calling get_secret_value on None.
+    # With no configured credentials, None is passed through so boto falls back
+    # to its own credential chain.
     monkeypatch.setattr(client_module, "s3_settings", lambda: _settings(access_key=None, secret_key=None))
 
     await S3Client()._create()
@@ -105,8 +102,7 @@ async def test_create_passes_none_credentials_when_unset(
 
 
 async def test_create_rejects_unknown_connection_kwargs() -> None:
-    # An unrecognized kwarg would silently split the pool key into a second,
-    # mis-configured client — it must be rejected loudly instead.
+    # An unrecognized kwarg would split the pool key, so it is rejected loudly.
     with pytest.raises(ValueError, match="unknown connection kwarg"):
         await S3Client()._create(bucket="typo")
 
@@ -168,8 +164,7 @@ async def test_create_keeps_explicit_scheme(fake_session: type[_FakeSession], mo
 async def test_create_prefixes_schemeless_host_starting_with_http(
     fake_session: type[_FakeSession], monkeypatch: pytest.MonkeyPatch
 ) -> None:
-    # A scheme-less host whose NAME starts with "http" must still get a scheme —
-    # only a real "http://" / "https://" prefix counts as an explicit scheme.
+    # A scheme-less host whose name starts with "http" must still get a scheme.
     monkeypatch.setattr(client_module, "s3_settings", lambda: _settings(endpoint="httpd-internal:9000", secure=False))
 
     await S3Client()._create()
@@ -197,8 +192,7 @@ def test_disconnection_predicate_matches_botocore_network_errors() -> None:
 
 
 async def test_close_closes_the_client_it_is_handed() -> None:
-    # A fresh S3Client (as the pool's shutdown sweep builds) must close any given
-    # client — no reliance on state from the instance that created it.
+    # A fresh S3Client must close any client it is handed, keeping no per-instance state.
     client = AsyncMock()
 
     await S3Client()._close(client)

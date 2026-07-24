@@ -1,9 +1,8 @@
-"""The pooled aioboto3 S3 client.
+"""Pooled aioboto3 S3 client.
 
-``S3Client`` subclasses ``tai42_kit.clients.PooledClient`` — one connected S3 client
-per event loop, reached through ``tai42_app.clients.client_ctx(S3Client)``. It reads
-its connection from the cached ``s3_settings`` singleton, so the pool key stays
-empty (a single configured client per loop).
+``S3Client`` subclasses ``tai42_kit.clients.PooledClient`` — one connected client
+per event loop. Its connection comes entirely from the cached ``s3_settings``
+singleton, so the pool key stays empty (a single configured client per loop).
 """
 
 from __future__ import annotations
@@ -18,9 +17,8 @@ from tai42_kit.clients.base import PooledClient, is_loop_bound_runtime_error, re
 
 from tai42_storage_s3.settings import s3_settings
 
-# The S3 client reads its entire connection from the cached settings singleton,
-# so it accepts no connection kwargs — anything passed is a typo that would
-# silently split the pool key and is rejected loudly.
+# Connection comes entirely from settings, so no connection kwargs are accepted;
+# anything passed would split the pool key and is rejected loudly.
 _ALLOWED_KWARGS: frozenset[str] = frozenset()
 
 
@@ -50,28 +48,21 @@ class S3Client(PooledClient[Any]):
                 request_checksum_calculation=settings.request_checksum_calculation,
             ),
         )
-        # Enter the aioboto3 client context and return the live client. The pool
-        # closes it via ``_close`` (``client.close()``), so no per-instance state
-        # is kept — a fresh ``S3Client()`` built by the pool's shutdown sweep can
-        # close any client it is handed.
+        # Enter the aioboto3 client context and return the live client; the pool
+        # closes it via ``_close``, so no per-instance state is kept.
         return await context.__aenter__()
 
     async def _close(self, client: Any) -> None:
         await client.close()
 
     def _disconnection_exceptions(self) -> tuple[type[Exception], ...]:
-        # botocore signals a dead connection through its own exception tree, not
-        # the builtin ConnectionError: botocore's ConnectionError covers the
-        # endpoint/connect failures and HTTPClientError the transport-level HTTP
-        # failures (closed connections, read timeouts). A ClientError — an API
-        # error carried over a healthy connection — matches neither, so it never
-        # evicts the pooled client.
+        # botocore signals a dead connection via its own exceptions, not builtin
+        # ConnectionError. A ClientError (an API error over a healthy connection)
+        # matches neither, so it never evicts the pooled client.
         return (BotocoreConnectionError, HTTPClientError)
 
     def _is_disconnection_error(self, exc: BaseException) -> bool:
-        # The aiohttp transport underneath aiobotocore is loop-bound and surfaces
-        # use after its event loop closed as a plain RuntimeError ("Event loop is
-        # closed" / "... attached to a different loop"); match those by message so
-        # an unrelated RuntimeError raised by caller code never tears down the
-        # pool.
+        # The loop-bound aiohttp transport surfaces use-after-loop-close as a plain
+        # RuntimeError; match those by message so an unrelated RuntimeError from
+        # caller code never tears down the pool.
         return super()._is_disconnection_error(exc) or is_loop_bound_runtime_error(exc)

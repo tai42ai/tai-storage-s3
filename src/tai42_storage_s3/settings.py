@@ -1,9 +1,6 @@
-"""S3 backend settings.
+"""S3 backend settings: the ``STORAGE_S3_`` env group.
 
-A ``TaiBaseSettings`` subclass reading the ``STORAGE_S3_`` env group, exposed
-through the ``s3_settings`` accessor cached by ``tai42_kit.settings.settings_cache``
-(so a live-reload soft restart drops the singleton with every other settings
-group). ``bucket`` is the only per-request field; the rest form the connection.
+``bucket`` is the only per-request field; the rest form the connection.
 """
 
 from __future__ import annotations
@@ -20,8 +17,7 @@ class S3Settings(TaiBaseSettings):
 
     bucket: str | None = None
     endpoint: str | None = None
-    # AWS credentials held as SecretStr so they never surface in a repr, log line,
-    # traceback, or model_dump; the plaintext is read only when building the client.
+    # SecretStr so credentials never surface in a repr, log, traceback, or model_dump.
     access_key: SecretStr | None = None
     secret_key: SecretStr | None = None
     secure: bool = True

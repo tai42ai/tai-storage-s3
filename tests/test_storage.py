@@ -24,9 +24,8 @@ def test_s3storage_is_registered_storage_subclass() -> None:
 
 
 def test_import_registers_provider_as_side_effect() -> None:
-    # The @tai42_app.storage.register_storage decorator must register S3Storage as
-    # an import side-effect; the stub facet records the class it was handed. This
-    # fails if the registration is dropped, not just if the class changes.
+    # Importing the package must register S3Storage via the decorator; the stub
+    # facet records the class it was handed.
     from tests.conftest import _stub_app
 
     assert _stub_app.storage.registered is S3Storage
@@ -284,9 +283,8 @@ async def test_delete_dir_surfaces_partial_errors(s3_client: Any) -> None:
 
 
 async def test_stat_returns_stored_content_type(s3_client: Any) -> None:
-    # The stored ContentType deliberately DIFFERS from what the ".png" suffix
-    # would infer (image/png), so a pass proves stat reports the native stored
-    # metadata rather than falling back to mimetypes path inference.
+    # The stored ContentType differs from what the ".png" suffix would infer,
+    # proving stat reports the stored metadata, not path inference.
     s3_client.head_object.return_value = {"ContentType": "application/octet-stream"}
 
     result = await S3Storage().stat("pic.png")
